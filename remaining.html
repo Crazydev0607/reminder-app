@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminder App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: url('https://static.vecteezy.com/system/resources/previews/036/226/616/non_2x/ai-generated-nature-landscapes-background-free-photo.jpg') no-repeat center center/cover;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen">
+    <div class="bg-white bg-opacity-80 p-6 rounded-xl shadow-lg w-full max-w-md backdrop-blur-md">
+        <h2 class="text-xl font-bold mb-4 text-center">📌 Set a Reminder</h2>
+
+        <input type="datetime-local" id="datetime" class="w-full px-4 py-2 border rounded-md mb-2">
+        <input type="text" id="note" placeholder="Enter your note"
+            class="w-full px-4 py-2 border rounded-md mb-2">
+        <button onclick="addNotification()" class="bg-blue-500 text-white w-full py-2 rounded-md mb-2 hover:bg-blue-600">
+            ➕ Add Reminder
+        </button>
+        <button onclick="requestNotificationPermission()" class="bg-green-500 text-white w-full py-2 rounded-md mb-4 hover:bg-green-600">
+            🔔 Enable Notifications
+        </button>
+
+        <h3 class="text-lg font-semibold">📋 Your Reminders:</h3>
+        <ul id="reminderList" class="mt-2 space-y-2"></ul>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(() => console.log('Service Worker Registered!'))
+                .catch(error => console.log('Service Worker Registration Failed:', error));
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        alert("Notification permission granted!");
+                    } else {
+                        alert("Permission denied!");
+                    }
+                });
+            }
+        }
+
+        function addNotification() {
+            let note = document.getElementById("note").value;
+            let dateTime = document.getElementById("datetime").value;
+
+            if (!note || !dateTime) {
+                alert("Please enter a note and select date & time.");
+                return;
+            }
+
+            let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+            notifications.push({ note, dateTime });
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+
+            updateReminderList();
+            alert("Reminder set!");
+        }
+
+        function updateReminderList() {
+            let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+            let reminderList = document.getElementById("reminderList");
+            reminderList.innerHTML = "";
+
+            notifications.forEach((notification, index) => {
+                let li = document.createElement("li");
+                li.className = "flex justify-between items-center bg-white p-2 rounded-md shadow-md bg-opacity-80";
+
+                let time = new Date(notification.dateTime).toLocaleString();
+
+                li.innerHTML = `
+                    <div>
+                        <p class="font-semibold">${notification.note}</p>
+                        <p class="text-sm text-gray-500">${time}</p>
+                    </div>
+                    <button onclick="deleteReminder(${index})"
+                        class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">❌</button>
+                `;
+
+                reminderList.appendChild(li);
+            });
+        }
+
+        function deleteReminder(index) {
+            let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+            notifications.splice(index, 1);
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+            updateReminderList();
+        }
+
+        function checkNotifications() {
+            let notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+            let now = new Date();
+
+            notifications = notifications.filter(notification => {
+                let notifTime = new Date(notification.dateTime);
+                if (now >= notifTime) {
+                    showNotification(notification.note);
+                    return false;
+                }
+                return true;
+            });
+
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+            updateReminderList();
+        }
+
+        function showNotification(note) {
+            if (Notification.permission === "granted" && "serviceWorker" in navigator) {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification("Reminder!", {
+                        body: note,
+                        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827301.png"
+                    });
+                });
+            }
+        }
+
+        setInterval(checkNotifications, 1000);
+        updateReminderList();
+    </script>
+</body>
+</html>
