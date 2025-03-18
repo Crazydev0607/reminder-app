@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reminder App</title>
+    <link rel="icon" href="https://teammaj.sgstechie.com/app/Content/image/favicon.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
     <style>
         body {
             background: url('https://static.vecteezy.com/system/resources/previews/036/226/616/non_2x/ai-generated-nature-landscapes-background-free-photo.jpg') no-repeat center center/cover;
@@ -114,15 +116,16 @@
         }
 
         function showNotification(note) {
-            if (Notification.permission === "granted" && "serviceWorker" in navigator) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification("Reminder!", {
-                        body: note,
-                        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827301.png"
-                    });
-                });
-            }
-        }
+    if (Notification.permission === "granted" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Reminder!", {
+                body: note,
+                icon: "https://cdn-icons-png.flaticon.com/512/1827/1827301.png",
+                requireInteraction: true // ✅ Keeps the notification until dismissed
+            });
+        });
+    }
+}
 
         setInterval(checkNotifications, 1000);
         updateReminderList();
